@@ -40,7 +40,7 @@ export default async function ProductsPage({ searchParams }: Props) {
       sort === "price-asc"
         ? { price: "asc" }
         : sort === "newest"
-        ? { createdAt: "desc" }
+        ? { id: "desc" } 
         : { featured: "desc" },
   })
 
