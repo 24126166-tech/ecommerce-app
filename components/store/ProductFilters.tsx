@@ -1,30 +1,57 @@
 "use client"
 
-import { useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 
-export default function ProductFilters({
-  onFilter,
-}: {
-  onFilter: (keyword: string) => void
-}) {
-  const [keyword, setKeyword] = useState("")
+interface Category {
+  id: string
+  name: string
+  slug: string
+}
+
+export default function ProductFilters({ categories }: { categories: Category[] }) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  const updateFilter = (key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (value) {
+      params.set(key, value)
+    } else {
+      params.delete(key)
+    }
+    router.push(`/products?${params.toString()}`)
+  }
 
   return (
-    <div className="mb-4 flex gap-2">
-      <input
-        type="text"
-        placeholder="Tìm sản phẩm..."
-        value={keyword}
-        onChange={(e) => setKeyword(e.target.value)}
-        className="border p-2 rounded w-full"
-      />
+    <div className="w-full md:w-64 space-y-6">
+      <div>
+        <h3 className="font-semibold mb-2">Danh mục</h3>
+        <select 
+          className="w-full border p-2 rounded"
+          onChange={(e) => updateFilter("category", e.target.value)}
+          defaultValue={searchParams.get("category") || ""}
+        >
+          <option value="">Tất cả danh mục</option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.slug}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
-      <button
-        onClick={() => onFilter(keyword)}
-        className="bg-black text-white px-4 rounded"
-      >
-        Lọc
-      </button>
+      <div>
+        <h3 className="font-semibold mb-2">Sắp xếp</h3>
+        <select 
+          className="w-full border p-2 rounded"
+          onChange={(e) => updateFilter("sort", e.target.value)}
+          defaultValue={searchParams.get("sort") || ""}
+        >
+          <option value="">Mặc định</option>
+          <option value="price-asc">Giá: Thấp đến Cao</option>
+          <option value="newest">Mới nhất</option>
+        </select>
+      </div>
     </div>
   )
 }
