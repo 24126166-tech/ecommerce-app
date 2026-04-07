@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma"
 import ProductCard from "@/components/store/ProductCard"
 import ProductFilters from "@/components/store/ProductFilters"
-import { Product } from "@prisma/client"
+
 type Props = {
   searchParams?: {
     category?: string
@@ -13,12 +13,13 @@ type Props = {
 }
 
 export default async function ProductsPage({ searchParams }: Props) {
-  const { category, minPrice, maxPrice, q, sort } = searchParams || {}
+  // Đợi searchParams trước khi sử dụng để tránh lỗi Next.js 15+
+  const params = await searchParams;
+  const { category, minPrice, maxPrice, q, sort } = params || {}
 
-  // ❗ tạm thời để categories rỗng (fix lỗi trước)
   const categories = await prisma.category.findMany()
 
-  const products: Product[] = await prisma.product.findMany({
+  const products = await prisma.product.findMany({
     where: {
       AND: [
         category ? { category: { slug: category } } : {},
@@ -28,7 +29,7 @@ export default async function ProductsPage({ searchParams }: Props) {
           ? {
               OR: [
                 { name: { contains: q, mode: "insensitive" } },
-                { description: { contains: q, mode: "insensitive" } },
+                // ✅ ĐÃ XÓA dòng description bị lỗi ở đây
               ],
             }
           : {},
@@ -45,12 +46,18 @@ export default async function ProductsPage({ searchParams }: Props) {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex gap-8">
+      <div className="flex flex-col md:flex-row gap-8">
         <ProductFilters categories={categories} />
 
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 flex-1">
           {products.map((p) => (
-            <ProductCard key={p.id} product={p} />
+            <ProductCard 
+              key={p.id} 
+              product={{
+                ...p,
+                price: Number(p.price) // ✅ Ép kiểu Decimal sang number ở đây
+              }} 
+            />
           ))}
         </div>
       </div>
